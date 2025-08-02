@@ -25,7 +25,7 @@ To get a local copy up and running, follow these simple steps.
 
 1.  **Clone the repo**
     ```sh
-    git clone <your-repo-url>
+    git clone https://github.com/Pramit3129/WIMSY.git
     cd 30DayOfAgents
     ```
 
