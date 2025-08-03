@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 import uvicorn
-from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+from routes import router
 
 app = FastAPI()
+
+load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,14 +16,7 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
-@app.get("/health")
-async def health_check():
-    return HTMLResponse(content="<h1>Service is running fully fit 📈 </h1>", status_code=200)
-
-@app.get("/")
-async def serve_index():
-    message = {"message": "Welcome to the FastAPI AI-Powered Voice Agent application!"}
-    return JSONResponse(content=message, status_code=200)
+app.include_router(router)
 
 
 if __name__ == "__main__":
