@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse, HTMLResponse
 import os
 import requests
@@ -51,8 +51,16 @@ async def server(request: TextToSpeechRequest):
 
 
 
-
-
+@router.post('/upload')
+async def upload_audio(audio: UploadFile = File(...)):
+    print(f"Received file: {audio.filename}")
+    try:
+        temp_file_path = f"public/{audio.filename}"
+        with open(temp_file_path, "wb") as f:
+            f.write(await audio.read())
+        return JSONResponse(content={"message": "File uploaded successfully", "filename": audio.filename}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 
