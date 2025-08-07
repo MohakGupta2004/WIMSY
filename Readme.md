@@ -2,8 +2,9 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Challenge-In%20Progress-blue?style=for-the-badge" alt="Challenge Status"/>
-  <img src="https://img.shields.io/badge/Days%20Completed-5%2F30-green?style=for-the-badge" alt="Progress"/>
+  <img src="https://img.shields.io/badge/Days%20Completed-6%2F30-green?style=for-the-badge" alt="Progress"/>
   <img src="https://img.shields.io/badge/Made%20with-Murf%20AI-orange?style=for-the-badge" alt="Made with Murf AI"/>
+  <img src="https://img.shields.io/badge/Transcription-AssemblyAI-purple?style=for-the-badge" alt="AssemblyAI"/>
 </div>
 
 This repository documents my journey through the **30-Day AI Voice Agent Challenge** by Murf AI. Follow along as I build a fully functional AI-powered voice companion from scratch, one day at a time!
@@ -14,6 +15,9 @@ This repository documents my journey through the **30-Day AI Voice Agent Challen
 
 The goal is to create a voice agent that can:
 - Convert text to realistic speech using Murf AI's TTS API
+- Record and transcribe audio using AssemblyAI
+- Provide live real-time transcription during recording
+- Upload and process audio files
 - Interact with users through a clean, intuitive interface
 - Demonstrate the power of modern voice technology
 
@@ -23,15 +27,21 @@ The goal is to create a voice agent that can:
 - Text-to-Speech conversion via Murf AI
 - Echo Bot with audio recording and playback
 - Audio file uploads with progress visualization
+- Server-side transcription using AssemblyAI
+- Live real-time transcription during recording
+- WebSocket-based streaming for continuous transcription
+- Persistent transcript history with clear functionality
 - Clean separation of concerns with model-view-controller pattern
-- Modern UI with Tailwind CSS
+- Modern UI with Tailwind CSS and responsive design
 
 ## 🛠️ Built With
 
 * **Backend:** [Python 3](https://www.python.org/) with [FastAPI](https://fastapi.tiangolo.com/)
 * **Frontend:** HTML, CSS, [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 * **Styling:** [Tailwind CSS](https://tailwindcss.com/) (via CDN)
-* **Voice Technology:** [Murf AI API](https://murf.ai/api)
+* **Voice Technology:** [Murf AI API](https://murf.ai/api) for Text-to-Speech
+* **Transcription:** [AssemblyAI](https://www.assemblyai.com/) for Speech-to-Text
+* **Real-time Communication:** WebSockets for live transcription
 * **Environment:** [Python venv](https://docs.python.org/3/library/venv.html) for dependency isolation
 
 ## 🏁 Getting Started
@@ -42,7 +52,8 @@ To get WIMSY running locally, follow these steps:
 
 * Python 3.8+
 * A Murf AI API key (sign up at [murf.ai](https://murf.ai))
-* Modern web browser
+* An AssemblyAI API key (sign up at [assemblyai.com](https://www.assemblyai.com/))
+* Modern web browser with microphone access
 
 ### Installation
 
@@ -54,7 +65,8 @@ To get WIMSY running locally, follow these steps:
 2. **Set up environment variables**
    ```sh
    # Create a .env file in the backend directory
-   echo "MURF_AI_API_KEY=your_api_key_here" > backend/.env
+   echo "MURF_AI_API_KEY=your_murf_api_key_here" > backend/.env
+   echo "ASSEMBLY_AI_API_KEY=your_assemblyai_api_key_here" >> backend/.env
    ```
 
 3. **Backend Setup**
@@ -67,7 +79,7 @@ To get WIMSY running locally, follow these steps:
    source venv/bin/activate
 
    # Install Python dependencies
-   pip install fastapi uvicorn python-dotenv requests
+   pip install -r requirements.txt
 
    # Run the FastAPI server
    uvicorn main:app --host 0.0.0.0 --port 5000 --reload
@@ -118,7 +130,15 @@ To get WIMSY running locally, follow these steps:
   * Enhanced UX with success/error notifications
   * Properly managed microphone resources
 
-* **Days 6-30:** Coming soon!
+* **Day 6:** 🎯 **Server-Side Transcription**
+  * Integrated AssemblyAI for speech-to-text conversion
+  * Created `/transcribe` endpoint for audio file transcription
+  * Added live real-time transcription during recording
+  * Implemented WebSocket streaming for continuous transcription
+  * Built persistent transcript history with clear functionality
+  * Enhanced UI with transcription display and management controls
+
+* **Days 7-30:** Coming soon!
 
 ## 📝 Project Structure
 
@@ -128,7 +148,7 @@ WIMSY/
 │   ├── main.py        # FastAPI application entry point
 │   ├── models.py      # Pydantic data models
 │   ├── routes.py      # API route definitions
-│   ├── requirement.txt # Python dependencies
+│   ├── requirements.txt # Python dependencies
 │   └── public/        # Folder for uploaded audio files
 ├── frontend/
 │   ├── index.html     # Main HTML interface

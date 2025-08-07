@@ -119,6 +119,9 @@ const recordingDuration = document.getElementById('recordingDuration');
 const playAgainButton = document.getElementById('playAgain');
 const recordNewButton = document.getElementById('recordNew');
 const innerLoadingBar = document.querySelector('.innerLoadingBar');
+const transcriptText = document.getElementById('transcriptText');
+
+
 
 // Define handler functions so we can remove them later
 function handleRecordButtonClick() {
@@ -217,6 +220,9 @@ function startRecording(stream) {
             }, 200);
             
             // Actual upload
+            const transcribe = await axios.post('http://localhost:5000/transcribe', formData); 
+            console.log('Transcription response:', transcribe.data);
+            transcriptText.textContent = transcribe.data.text || 'No transcription available';
             const post = await axios.post('http://localhost:5000/upload', formData);
             console.log('Post response:', post.data);
             
@@ -346,6 +352,7 @@ function resetRecording() {
     recordingLabel.className = 'text-sm font-medium text-orange-700';
     recordingTimerElement?.classList.add('hidden');
     recordingTimerElement.textContent = '00:00';
+    transcriptText.textContent = ''; 
     
     // Reset progress bar and hide it
     const uploadProgressContainer = document.getElementById('uploadProgressContainer');

@@ -4,6 +4,8 @@ import os
 import requests
 import json
 from models import TextToSpeechRequest
+import assemblyai as aai
+
 
 router = APIRouter()
 
@@ -63,8 +65,22 @@ async def upload_audio(audio: UploadFile = File(...)):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
+@router.post('/transcribe')
+async def transcribe_audio(audio: UploadFile = File(...)):
+    print("HIT SERVER")
+    ASSEMBLY_AI_API_KEY = os.getenv('ASSEMBLY_AI_API_KEY')
+    if not ASSEMBLY_AI_API_KEY:
+        return JSONResponse(content={"error": "ASSEMBLY_AI_API_KEY not found"}, status_code=500)  
+    aai.settings.api_key = ASSEMBLY_AI_API_KEY
+    audioFile = await audio.read()
+    print("Transcribing audio file...")
+    config = aai.TranscriptionConfig()
+    transcript = aai.Transcriber().transcribe(audioFile, config=config)
 
+    if(transcript.status == aai.TranscriptStatus.error):
+        return JSONResponse(content={"error": "Transcription failed"}, status_code=500)
 
+    return JSONResponse(content={"text": transcript.text}, status_code=200)  
 
 
 

@@ -4,9 +4,11 @@
   <img src="https://img.shields.io/badge/Framework-FastAPI-009688?style=for-the-badge&logo=fastapi" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
   <img src="https://img.shields.io/badge/TTS-Murf_AI-FF6B6B?style=for-the-badge" alt="Murf AI"/>
+  <img src="https://img.shields.io/badge/STT-AssemblyAI-purple?style=for-the-badge" alt="AssemblyAI"/>
+  <img src="https://img.shields.io/badge/WebSocket-Real--time-green?style=for-the-badge" alt="WebSocket"/>
 </div>
 
-This is the backend service for the WIMSY AI Voice Agent. It provides RESTful API endpoints to power the voice agent functionality, including text-to-speech conversion using the Murf AI API.
+This is the backend service for the WIMSY AI Voice Agent. It provides RESTful API endpoints and WebSocket connections to power the voice agent functionality, including text-to-speech conversion using Murf AI and speech-to-text transcription using AssemblyAI.
 
 ## 📋 Table of Contents
 
@@ -17,6 +19,8 @@ This is the backend service for the WIMSY AI Voice Agent. It provides RESTful AP
   - [Welcome Message](#welcome-message)
   - [Text-to-Speech Conversion](#text-to-speech-conversion)
   - [Audio Upload](#audio-upload)
+  - [Audio Transcription](#audio-transcription)
+  - [Live Transcription WebSocket](#live-transcription-websocket)
 - [Models](#-models)
 - [Error Handling](#-error-handling)
 
@@ -43,10 +47,13 @@ The API will be available at `http://localhost:5000`
 Create a `.env` file in the backend directory with the following variables:
 
 ```
-MURF_AI_API_KEY=your_api_key_here
+MURF_AI_API_KEY=your_murf_api_key_here
+ASSEMBLY_AI_API_KEY=your_assemblyai_api_key_here
 ```
 
-You can get your Murf AI API key by signing up at [murf.ai](https://murf.ai).
+You can get your API keys by signing up at:
+- [Murf AI](https://murf.ai) for text-to-speech
+- [AssemblyAI](https://www.assemblyai.com/) for speech-to-text
 
 ## 🌐 API Endpoints
 
@@ -136,6 +143,59 @@ curl -X POST http://localhost:5000/upload \
   -F "audio=@recording.webm" 
 ```
 
+### Audio Transcription
+
+**Endpoint:** `POST /transcribe`
+
+Transcribes an audio file using the AssemblyAI API.
+
+**Request:**
+- Must be a multipart/form-data request
+- File field name should be `audio`
+- Supports audio files (webm, wav, mp3, etc.)
+
+**Response:**
+```json
+{
+  "text": "This is the transcribed text from the audio file."
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:5000/transcribe \
+  -F "audio=@recording.webm"
+```
+
+### Live Transcription WebSocket
+
+**Endpoint:** `WebSocket /transcribe`
+
+Provides real-time audio transcription via WebSocket connection. This endpoint accepts streaming audio data and returns live transcription results.
+
+**Connection:**
+```javascript
+const websocket = new WebSocket('ws://localhost:5000/transcribe');
+```
+
+**Input Format:**
+- Base64 encoded audio data: `data:audio/webm;base64,{audio_data}`
+- Control messages: `{"type": "recording_stopped"}` or `{"type": "close_connection"}`
+
+**Output Format:**
+```json
+{
+  "text": "Live transcription text",
+  "is_final": false
+}
+```
+
+**Features:**
+- Real-time streaming transcription
+- Persistent connection for multiple recordings
+- Format turns for better readability
+- Thread-safe event handling
+
 ## 📝 Models
 
 ### TextToSpeechRequest
@@ -146,6 +206,25 @@ class TextToSpeechRequest(BaseModel):
 ```
 
 This model is used to validate the request body for the `/server` endpoint.
+
+### TranscriptionRequest
+
+```python
+class TranscriptionRequest(BaseModel):
+    audio_data: str
+```
+
+This model is used for WebSocket transcription requests.
+
+### TranscriptionResponse
+
+```python
+class TranscriptionResponse(BaseModel):
+    text: str
+    is_final: bool = False
+```
+
+This model represents the response format for transcription results.
 
 ### Audio Upload
 
@@ -160,10 +239,13 @@ The API provides appropriate error responses for various scenarios:
 
 | Error | Status Code | Response |
 |-------|-------------|----------|
-| Missing API Key | 500 | `{"error": "MURF_AI_API_KEY not found"}` |
+| Missing Murf AI API Key | 500 | `{"error": "MURF_AI_API_KEY not found"}` |
+| Missing AssemblyAI API Key | 500 | `{"error": "ASSEMBLY_AI_API_KEY not found"}` |
 | Request Error | 500 | `{"error": "[Error message]"}` |
 | JSON Decode Error | 500 | `{"error": "Failed to decode JSON response"}` |
 | File Upload Error | 500 | `{"error": "[Error message]"}` |
+| Transcription Error | 500 | `{"error": "Transcription failed"}` |
+| WebSocket Error | - | `{"error": "[Error message]"}` |
 | Invalid File Type | 422 | `{"error": "Unsupported file type"}` |
 
 ## 🧩 Project Structure
@@ -183,9 +265,17 @@ backend/
 The backend follows a modular architecture:
 
 1. `main.py` initializes the FastAPI application, configures CORS, and includes the router from `routes.py`.
-2. `models.py` defines Pydantic models for request validation.
-3. `routes.py` contains all the API endpoints and their implementation.
+2. `models.py` defines Pydantic models for request validation and response formatting.
+3. `routes.py` contains all the API endpoints, WebSocket handlers, and their implementation.
 4. `public/` directory is automatically created when needed to store uploaded audio files.
+
+## 🔧 Key Technologies
+
+- **FastAPI**: Modern, fast web framework for building APIs
+- **WebSockets**: Real-time bidirectional communication for live transcription
+- **AssemblyAI Streaming SDK**: Real-time speech-to-text processing
+- **Asyncio**: Asynchronous programming for handling concurrent requests
+- **Thread-safe Operations**: Proper handling of cross-thread communication
 
 ## 💻 Development
 
