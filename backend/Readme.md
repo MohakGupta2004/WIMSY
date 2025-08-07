@@ -16,7 +16,6 @@ This is the backend service for the WIMSY AI Voice Agent. It provides RESTful AP
   - [Health Check](#health-check)
   - [Welcome Message](#welcome-message)
   - [Text-to-Speech Conversion](#text-to-speech-conversion)
-  - [Audio Upload](#audio-upload)
 - [Models](#-models)
 - [Error Handling](#-error-handling)
 
@@ -111,31 +110,6 @@ curl -X POST http://localhost:5000/server \
   -d '{"text": "Hello, I am WIMSY, your AI-powered voice agent!"}'
 ```
 
-### Audio Upload
-
-**Endpoint:** `POST /upload`
-
-Uploads an audio file to the server. The file will be stored in the `public` directory.
-
-**Request:**
-- Must be a multipart/form-data request
-- File field name should be `audio`
-- Supports audio files (webm, wav, mp3, etc.)
-
-**Response:**
-```json
-{
-  "message": "File uploaded successfully",
-  "filename": "recording.webm"
-}
-```
-
-**Example:**
-```bash
-curl -X POST http://localhost:5000/upload \
-  -F "audio=@recording.webm" 
-```
-
 ## 📝 Models
 
 ### TextToSpeechRequest
@@ -147,13 +121,6 @@ class TextToSpeechRequest(BaseModel):
 
 This model is used to validate the request body for the `/server` endpoint.
 
-### Audio Upload
-
-For the `/upload` endpoint, FastAPI's `UploadFile` class is used to handle the incoming file. This provides:
-- File-like interface
-- Asynchronous I/O operations
-- Metadata like filename and content type
-
 ## ❌ Error Handling
 
 The API provides appropriate error responses for various scenarios:
@@ -163,8 +130,6 @@ The API provides appropriate error responses for various scenarios:
 | Missing API Key | 500 | `{"error": "MURF_AI_API_KEY not found"}` |
 | Request Error | 500 | `{"error": "[Error message]"}` |
 | JSON Decode Error | 500 | `{"error": "Failed to decode JSON response"}` |
-| File Upload Error | 500 | `{"error": "[Error message]"}` |
-| Invalid File Type | 422 | `{"error": "Unsupported file type"}` |
 
 ## 🧩 Project Structure
 
@@ -174,7 +139,6 @@ backend/
 ├── models.py        # Pydantic data models
 ├── routes.py        # API route definitions
 ├── requirements.txt # Python dependencies
-├── public/          # Directory for storing uploaded audio files
 └── README.md        # This file
 ```
 
@@ -185,7 +149,6 @@ The backend follows a modular architecture:
 1. `main.py` initializes the FastAPI application, configures CORS, and includes the router from `routes.py`.
 2. `models.py` defines Pydantic models for request validation.
 3. `routes.py` contains all the API endpoints and their implementation.
-4. `public/` directory is automatically created when needed to store uploaded audio files.
 
 ## 💻 Development
 

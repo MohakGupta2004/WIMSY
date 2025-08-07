@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Challenge-In%20Progress-blue?style=for-the-badge" alt="Challenge Status"/>
-  <img src="https://img.shields.io/badge/Days%20Completed-5%2F30-green?style=for-the-badge" alt="Progress"/>
+  <img src="https://img.shields.io/badge/Days%20Completed-2%2F30-green?style=for-the-badge" alt="Progress"/>
   <img src="https://img.shields.io/badge/Made%20with-Murf%20AI-orange?style=for-the-badge" alt="Made with Murf AI"/>
 </div>
 
@@ -21,8 +21,6 @@ The goal is to create a voice agent that can:
 
 - RESTful API server with FastAPI
 - Text-to-Speech conversion via Murf AI
-- Echo Bot with audio recording and playback
-- Audio file uploads with progress visualization
 - Clean separation of concerns with model-view-controller pattern
 - Modern UI with Tailwind CSS
 
@@ -99,26 +97,7 @@ To get WIMSY running locally, follow these steps:
   * Integrated Murf AI's REST TTS API
   * Set up secure environment variables for API keys
 
-* **Day 3:** 🎨 **UI Enhancement & CORS Setup**
-  * Added responsive UI with Tailwind CSS
-  * Implemented CORS to allow cross-origin requests
-  * Enhanced error handling in API endpoints
-  * Added loading animations and visual feedback
-
-* **Day 4:** 🎤 **Echo Bot Implementation**
-  * Created an Echo Bot that records user's voice
-  * Implemented MediaRecorder API for browser audio recording
-  * Added recording timer and visual indicators
-  * Built audio playback functionality
-
-* **Day 5:** 📤 **Audio Upload Feature**
-  * Created backend endpoint to receive and save audio files
-  * Implemented frontend audio upload functionality
-  * Added upload progress bar with visual feedback
-  * Enhanced UX with success/error notifications
-  * Properly managed microphone resources
-
-* **Days 6-30:** Coming soon!
+* **Days 3-30:** Coming soon!
 
 ## 📝 Project Structure
 
@@ -128,13 +107,11 @@ WIMSY/
 │   ├── main.py        # FastAPI application entry point
 │   ├── models.py      # Pydantic data models
 │   ├── routes.py      # API route definitions
-│   ├── requirement.txt # Python dependencies
-│   └── public/        # Folder for uploaded audio files
+│   └── requirement.txt # Python dependencies
 ├── frontend/
 │   ├── index.html     # Main HTML interface
 │   ├── index.js       # Frontend JavaScript
-│   ├── package.json   # Frontend dependencies
-│   └── *.png          # UI assets and images
+│   └── package.json   # Frontend dependencies
 └── Readme.md          # Project documentation
 ```
 
@@ -144,9 +121,7 @@ WIMSY/
 * Custom voice selection
 * Conversation memory
 * Voice recognition integration
-* Speech-to-text capabilities
-* Extended recording options
-* Cloud storage for audio files
+* Mobile responsive UI
 
 ---
 
