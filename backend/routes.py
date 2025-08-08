@@ -5,6 +5,7 @@ import requests
 import json
 from models import TextToSpeechRequest
 import assemblyai as aai
+import httpx
 
 
 router = APIRouter()
@@ -31,25 +32,56 @@ async def server(request: TextToSpeechRequest):
     }
 
     textToSay = "Hello, I am WIMSY, your AI-powered voice agent. How can I assist you today?"
+    voice_id = "en-UK-ruby"
+    style = "Conversational"
 
     if request.text:
         textToSay = request.text
 
+    if request.voice_id:   
+        voice_id = request.voice_id
+    
+    if request.style:
+        style = request.style
+
     data = {
-        "text" : request.text,
-        "voice_id": "en-UK-ruby",
-        "style": "Conversational",
-        "multiNativeLocale": "en-US"
+        "text": textToSay,
+        "voice_id": voice_id,
+        "style": style,
+        "multiNativeLocale": "en-IN" if voice_id.startswith("en-IN") else "en-US"
     }
     
     try:
         response = requests.post(endpoint, headers=headers, data=json.dumps(data))
-        audio_url = response.json()['audioFile']
+        print(f"Murf API response status: {response.status_code}")
+        print(f"Murf API response: {response.text}")
+        
+        if response.status_code != 200:
+            return JSONResponse(content={"error": f"Murf API error: {response.text}"}, status_code=500)
+            
+        response_data = response.json()
+        print(f"Murf API response JSON: {response_data}")
+        
+        # Check for different possible keys in the response
+        audio_url = None
+        if 'audioFile' in response_data:
+            audio_url = response_data['audioFile']
+        elif 'audioUrl' in response_data:
+            audio_url = response_data['audioUrl']
+        elif 'audio_url' in response_data:
+            audio_url = response_data['audio_url']
+        elif 'url' in response_data:
+            audio_url = response_data['url']
+        else:
+            return JSONResponse(content={"error": f"Audio URL not found in response. Available keys: {list(response_data.keys())}"}, status_code=500)
+            
         return JSONResponse(content={"audioUrl": audio_url}, status_code=200)
     except requests.exceptions.RequestException as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
     except json.JSONDecodeError:
         return JSONResponse(content={"error": "Failed to decode JSON response"}, status_code=500)
+    except KeyError as e:
+        return JSONResponse(content={"error": f"Key error: {str(e)}"}, status_code=500)
 
 
 
@@ -83,6 +115,67 @@ async def transcribe_audio(audio: UploadFile = File(...)):
     return JSONResponse(content={"text": transcript.text}, status_code=200)  
 
 
+@router.post('/tts/echo')
+async def tts_echo(audio: UploadFile = File(...)):
+    try:
+        print(f"TTS/Echo endpoint hit - Received file: {audio.filename}")
+        print(f"File content type: {audio.content_type}")
+        print(f"File size: {audio.size}")
+        
+        transribeEndpoint = "http://localhost:5000/transcribe"
+        ttsEndpoint = "http://localhost:5000/server"
+        
+        file_content = await audio.read()
+        print(f"File content length: {len(file_content)}")
+        
+        files = {'audio': (audio.filename, file_content, audio.content_type)}
+        
+        print(f"Calling transcribe endpoint with files: {files.keys()}")
+        
+        async with httpx.AsyncClient() as client:
+            transcribeResponse = await client.post(transribeEndpoint, files=files)
+            print(f"Transcribe response status: {transcribeResponse.status_code}")
+            print(f"Transcribe response: {transcribeResponse.text}")
+            
+            if transcribeResponse.status_code != 200:
+                return JSONResponse(content={"error": f"Transcription failed: {transcribeResponse.text}"}, status_code=500)
+            
+            transcribe_data = transcribeResponse.json()
+            text = transcribe_data.get("text", "")
+            if not text:
+                return JSONResponse(content={"error": "No text found in transcription"}, status_code=400)
+            print(f"Transcribed text: {text}")
+            if not text.strip():
+                return JSONResponse(content={"error": "Transcribed text is empty"}, status_code=400)
+            
+            tts_data = {
+                "text": text,
+                "voice_id": "en-IN-arohi",
+                "style": "Conversational"
+            }
+            print(f"Calling TTS endpoint with data: {tts_data}")
+            
+            ttsResponse = await client.post(ttsEndpoint, json=tts_data)
+            print(f"TTS response status: {ttsResponse.status_code}")
+            print(f"TTS response: {ttsResponse.text}")
+            
+            if ttsResponse.status_code != 200:
+                return JSONResponse(content={"error": f"TTS generation failed: {ttsResponse.text}"}, status_code=500)
+            
+            tts_response_data = ttsResponse.json()
+            audioUrl = tts_response_data.get("audioUrl", "")
+            if not audioUrl:
+                return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+                
+            return JSONResponse(content={"audioUrl": audioUrl, "transcribedText": text}, status_code=200)
+            
+    except Exception as e:
+        print(f"Exception in tts_echo: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500) 
+
 
 
     # {"voice_id":"en-UK-ruby","style":"Promo","multiNativeLocale":"en-US"}
+    # {"voice_id":"en-IN-arohi","style":"Conversational"}

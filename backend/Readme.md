@@ -21,6 +21,7 @@ This is the backend service for the WIMSY AI Voice Agent. It provides RESTful AP
   - [Audio Upload](#audio-upload)
   - [Audio Transcription](#audio-transcription)
   - [Live Transcription WebSocket](#live-transcription-websocket)
+  - [Echo Bot v2: Transcribe & Murf Voice Playback](#echo-bot-v2-transcribe--murf-voice-playback)
 - [Models](#-models)
 - [Error Handling](#-error-handling)
 
@@ -195,6 +196,39 @@ const websocket = new WebSocket('ws://localhost:5000/transcribe');
 - Persistent connection for multiple recordings
 - Format turns for better readability
 - Thread-safe event handling
+
+### Echo Bot v2: Transcribe & Murf Voice Playback
+
+**Endpoint:** `POST /tts/echo`
+
+Accepts an audio file, transcribes it using AssemblyAI, then generates new audio using Murf AI and returns the Murf audio URL and transcript.
+
+**Request:**
+- Multipart/form-data with file field name `audio`
+
+**Response:**
+```json
+{
+  "audioUrl": "https://cdn.murf.ai/speech/abcdef123456.mp3",
+  "transcribedText": "Your transcribed text here."
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:5000/tts/echo \
+  -F "audio=@recording.webm"
+```
+
+**Workflow:**
+1. Receives audio from client
+2. Transcribes audio using AssemblyAI
+3. Sends transcript to Murf AI for voice synthesis
+4. Returns Murf-generated audio URL and transcript to client
+
+**Frontend:**
+- Plays Murf-generated audio in the UI
+- Displays transcript for each recording session
 
 ## 📝 Models
 

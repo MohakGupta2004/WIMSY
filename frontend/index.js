@@ -222,9 +222,16 @@ function startRecording(stream) {
             // Actual upload
             const transcribe = await axios.post('http://localhost:5000/transcribe', formData); 
             console.log('Transcription response:', transcribe.data);
+
             transcriptText.textContent = transcribe.data.text || 'No transcription available';
             const post = await axios.post('http://localhost:5000/upload', formData);
             console.log('Post response:', post.data);
+
+            
+            const mrufAudioUrl = await axios.post('http://localhost:5000/tts/echo', formData);
+            console.log('MRUF Audio URL:', mrufAudioUrl.data);
+            const playBackAudio = document.getElementById('playBackAudio');
+            playBackAudio.src = mrufAudioUrl.data.audioUrl;
             
             // Complete the progress animation
             clearInterval(progressInterval);

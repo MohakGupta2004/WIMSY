@@ -148,9 +148,9 @@
             </div>
 
             <!-- Recorded Audio Playback add hidden here-->
-            <div class="recordedAudioContainer hidden w-full" id="recordedAudioContainer">
-                <div class="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-lg p-3 sm:p-4 mb-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-1 sm:gap-0">
+            <div class="recordedAudioContainer hidden w-full h-full flex flex-col justify-evenly gap-3" id="recordedAudioContainer">
+                <div class="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-lg p-3 sm:p-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
                         <span class="text-xs sm:text-sm font-medium text-green-700">✅ Recording Complete!</span>
                         <span class="text-xs text-green-600" id="recordingDuration">Duration: 00:00</span>
                     </div>
@@ -192,6 +192,11 @@
                     <p class="font-medium text-lg tracking-tighter ">Transcript:</p>
                     <p id="transcriptText" class="text-sm tracking-tight"></p>
                 </div>
+                <div class="playBackAudioWith p-2 border border-2 rounded-lg  border-blue-500 flex flex-col justify-evenly h-full gap-2">
+                    <p class="font-bold text-lg tracking-tighter" >Audio Playback with Murf AI</p>
+                    <audio class="self-center" id="playBackAudio" controls autoplay></audio>
+                </div>
+
             </div>
         </div>
     </div>

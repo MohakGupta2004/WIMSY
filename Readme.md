@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Challenge-In%20Progress-blue?style=for-the-badge" alt="Challenge Status"/>
-  <img src="https://img.shields.io/badge/Days%20Completed-6%2F30-green?style=for-the-badge" alt="Progress"/>
+  <img src="https://img.shields.io/badge/Days%20Completed-7%2F30-green?style=for-the-badge" alt="Progress"/>
   <img src="https://img.shields.io/badge/Made%20with-Murf%20AI-orange?style=for-the-badge" alt="Made with Murf AI"/>
   <img src="https://img.shields.io/badge/Transcription-AssemblyAI-purple?style=for-the-badge" alt="AssemblyAI"/>
 </div>
@@ -138,7 +138,15 @@ To get WIMSY running locally, follow these steps:
   * Built persistent transcript history with clear functionality
   * Enhanced UI with transcription display and management controls
 
-* **Days 7-30:** Coming soon!
+* **Day 7:** ✨ **Echo Bot v2 — Murf AI Voice Playback & Transcript Display**
+  * Created `/tts/echo` endpoint to accept audio, transcribe it, and generate Murf AI voice
+  * Integrated AssemblyAI for transcription and Murf AI for voice synthesis
+  * Frontend now plays back Murf-generated audio instead of the original recording
+  * Transcript of each recording is displayed in the UI for every session
+  * Enhanced user experience with real-time feedback and professional voice output
+  * Demo ready for sharing and public feedback
+
+* **Days 8-30:** Coming soon!
 
 ## 📝 Project Structure
 
