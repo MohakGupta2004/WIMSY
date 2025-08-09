@@ -22,6 +22,7 @@ This is the backend service for the WIMSY AI Voice Agent. It provides RESTful AP
   - [Audio Transcription](#audio-transcription)
   - [Live Transcription WebSocket](#live-transcription-websocket)
   - [Echo Bot v2: Transcribe & Murf Voice Playback](#echo-bot-v2-transcribe--murf-voice-playback)
+  - [LLM Query: Gemini AI Text Generation](#llm-query-gemini-ai-text-generation)
 - [Models](#-models)
 - [Error Handling](#-error-handling)
 
@@ -50,11 +51,13 @@ Create a `.env` file in the backend directory with the following variables:
 ```
 MURF_AI_API_KEY=your_murf_api_key_here
 ASSEMBLY_AI_API_KEY=your_assemblyai_api_key_here
+GOOGLE_GENAI_API_KEY=your_google_genai_api_key_here
 ```
 
 You can get your API keys by signing up at:
 - [Murf AI](https://murf.ai) for text-to-speech
 - [AssemblyAI](https://www.assemblyai.com/) for speech-to-text
+- [Google AI Studio](https://ai.google.dev/) for Gemini LLM access
 
 ## 🌐 API Endpoints
 
@@ -230,6 +233,40 @@ curl -X POST http://localhost:5000/tts/echo \
 - Plays Murf-generated audio in the UI
 - Displays transcript for each recording session
 
+### LLM Query: Gemini AI Text Generation
+
+**Endpoint:** `POST /llm/query`
+
+Accepts a text query and generates an AI response using Google's Gemini 2.5 Flash model. The response is tailored with a cat-themed assistant persona named WIMSY.
+
+**Request Body:**
+```json
+{
+  "query": "Your question or request for the AI assistant"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "AI-generated response from Gemini model"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:5000/llm/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Tell me a cat joke"}'
+```
+
+**Features:**
+- Natural language understanding and generation
+- Cat-themed AI assistant persona
+- Fast response times with Gemini 2.5 Flash model
+- Contextual understanding of queries
+- Detailed error reporting
+
 ## 📝 Models
 
 ### TextToSpeechRequest
@@ -237,9 +274,20 @@ curl -X POST http://localhost:5000/tts/echo \
 ```python
 class TextToSpeechRequest(BaseModel):
     text: str
+    voice_id: Optional[str] = None
+    style: Optional[str] = None
 ```
 
 This model is used to validate the request body for the `/server` endpoint.
+
+### LLMQuery
+
+```python
+class LLMQuery(BaseModel):
+    query: str
+```
+
+This model is used to validate the request body for the `/llm/query` endpoint.
 
 ### TranscriptionRequest
 
@@ -308,6 +356,7 @@ The backend follows a modular architecture:
 - **FastAPI**: Modern, fast web framework for building APIs
 - **WebSockets**: Real-time bidirectional communication for live transcription
 - **AssemblyAI Streaming SDK**: Real-time speech-to-text processing
+- **Google Gemini 2.5**: Advanced large language model for AI text generation
 - **Asyncio**: Asynchronous programming for handling concurrent requests
 - **Thread-safe Operations**: Proper handling of cross-thread communication
 
