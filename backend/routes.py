@@ -3,9 +3,11 @@ from fastapi.responses import JSONResponse, HTMLResponse
 import os
 import requests
 import json
-from models import TextToSpeechRequest
+from models import TextToSpeechRequest, LLMQuery
 import assemblyai as aai
 import httpx
+from google import genai
+from google.genai import types
 
 
 router = APIRouter()
@@ -176,6 +178,30 @@ async def tts_echo(audio: UploadFile = File(...)):
         return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500) 
 
 
-
     # {"voice_id":"en-UK-ruby","style":"Promo","multiNativeLocale":"en-US"}
     # {"voice_id":"en-IN-arohi","style":"Conversational"}
+
+
+@router.post('/llm/query')
+async def llm_query(request: LLMQuery):
+    query = request.query
+    print(f"LLM query received: {query}")
+    if not query:
+        return JSONResponse(content={"error": "Query cannot be empty"}, status_code=400)
+    try:
+        client = genai.Client(api_key=os.getenv('GOOGLE_GENAI_API_KEY'))
+        chat = client.chats.create(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction="You are an helpful cat-themed AI Assistant and your name is wimsy."
+            )
+        )
+
+        response = chat.send_message(query)
+        print(f"LLM response: {response.text}")
+        return JSONResponse(content={"response": response.text}, status_code=200)
+    except Exception as e:
+        print(f"Exception in llm_query: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500)  

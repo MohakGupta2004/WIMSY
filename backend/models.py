@@ -5,3 +5,6 @@ class TextToSpeechRequest(BaseModel):
     text: str
     voice_id: Optional[str] = None
     style: Optional[str] = None
+
+class LLMQuery(BaseModel):
+    query: str
