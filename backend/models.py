@@ -8,3 +8,4 @@ class TextToSpeechRequest(BaseModel):
 
 class LLMQuery(BaseModel):
     query: str
+    userId: str

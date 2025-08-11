@@ -55,14 +55,14 @@ async def server(request: TextToSpeechRequest):
     
     try:
         response = requests.post(endpoint, headers=headers, data=json.dumps(data))
-        print(f"Murf API response status: {response.status_code}")
-        print(f"Murf API response: {response.text}")
+        # print(f"Murf API response status: {response.status_code}")
+        # print(f"Murf API response: {response.text}")
         
         if response.status_code != 200:
             return JSONResponse(content={"error": f"Murf API error: {response.text}"}, status_code=500)
             
         response_data = response.json()
-        print(f"Murf API response JSON: {response_data}")
+        print(f"Murf API response JSON: {response_data['audioFile']}")
         
         # Check for different possible keys in the response
         audio_url = None
@@ -182,26 +182,205 @@ async def tts_echo(audio: UploadFile = File(...)):
     # {"voice_id":"en-IN-arohi","style":"Conversational"}
 
 
+histories = {}
 @router.post('/llm/query')
-async def llm_query(request: LLMQuery):
-    query = request.query
-    print(f"LLM query received: {query}")
-    if not query:
-        return JSONResponse(content={"error": "Query cannot be empty"}, status_code=400)
+async def llm_query(audio: UploadFile = File(...)):
     try:
-        client = genai.Client(api_key=os.getenv('GOOGLE_GENAI_API_KEY'))
-        chat = client.chats.create(
-            model="gemini-2.5-flash",
-            config=types.GenerateContentConfig(
-                system_instruction="You are an helpful cat-themed AI Assistant and your name is wimsy."
-            )
-        )
+        print(f"llm/query endpoint hit - Received file: {audio.filename}")
+        print(f"File content type: {audio.content_type}")
+        print(f"File size: {audio.size}")
+        
+        transribeEndpoint = "http://localhost:5000/transcribe"
+        ttsEndpoint = "http://localhost:5000/server"
+        
+        file_content = await audio.read()
+        print(f"File content length: {len(file_content)}")
+        
+        files = {'audio': (audio.filename, file_content, audio.content_type)}
+        
+        print(f"Calling transcribe endpoint with files: {files.keys()}")
+        
+        async with httpx.AsyncClient() as client:
+            transcribeResponse = await client.post(transribeEndpoint, files=files)
+            # print(f"Transcribe response status: {transcribeResponse.status_code}")
+            print(f"Transcribe response: {transcribeResponse.text}")
+            
+            if transcribeResponse.status_code != 200:
+                return JSONResponse(content={"error": f"Transcription failed: {transcribeResponse.text}"}, status_code=500)
+            
+            transcribe_data = transcribeResponse.json()
+            text = transcribe_data.get("text", "")
+            if not text:
+                return JSONResponse(content={"error": "No text found in transcription"}, status_code=400)
+            print(f"Transcribed text: {text}")
+            if not text.strip():
+                return JSONResponse(content={"error": "Transcribed text is empty"}, status_code=400)
+            
 
-        response = chat.send_message(query)
-        print(f"LLM response: {response.text}")
-        return JSONResponse(content={"response": response.text}, status_code=200)
+            query = text
+
+            print(f"LLM query received: {query}")
+            if not query:
+                return JSONResponse(content={"error": "Query cannot be empty"}, status_code=400)
+            try:
+                llm = genai.Client(api_key=os.getenv('GOOGLE_GENAI_API_KEY'))
+                
+                history_for_gemini = []
+                for msg in histories:
+                    if msg["role"] == "user":
+                        history_for_gemini.append(types.Content(role="user", parts=[types.Part(text=msg["content"])]))
+                    elif msg["role"] == "model":
+                        history_for_gemini.append(types.Content(role="model", parts=[types.Part(text=msg["content"])]))
+                
+                chat = llm.chats.create(
+                    model="gemini-1.5-flash",
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are an helpful cat-themed AI Assistant and your name is wimsy."
+                    ),
+                    history=history_for_gemini
+                )
+
+                response = chat.send_message(query)
+                response = response.text
+                # Store history in our format
+                histories.append({"role": "user", "content": query})
+                histories.append({"role": "model", "content": response})
+                # print(histories)  
+                print(f"LLM response: {response}")
+                
+            except Exception as e:
+                print(f"Exception in llm_query: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500)
+
+            tts_data = {
+                "text": response,
+                "voice_id": "en-IN-arohi",
+                "style": "Conversational"
+            }
+            print(f"Calling TTS endpoint with LLM Response data: {tts_data}")
+            
+            ttsResponse = await client.post(ttsEndpoint, json=tts_data)
+            print(f"TTS response status: {ttsResponse.status_code}")
+            print(f"TTS response: {ttsResponse.text}")
+            
+            if ttsResponse.status_code != 200:
+                return JSONResponse(content={"error": f"TTS generation failed: {ttsResponse.text}"}, status_code=500)
+            
+            tts_response_data = ttsResponse.json()
+            audioUrl = tts_response_data.get("audioUrl", "")
+            if not audioUrl:
+                return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+                
+            return JSONResponse(content={"audioUrl": audioUrl, "LLM_Response": response}, status_code=200)
+            
     except Exception as e:
-        print(f"Exception in llm_query: {str(e)}")
+        print(f"Exception in tts_echo: {str(e)}")
         import traceback
         traceback.print_exc()
-        return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500)  
+        return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500) 
+
+@router.post('/agent/chat/{session_id}')
+async def agent_chat(session_id: str, audio: UploadFile = File(...)):
+    try:
+            print(f"llm/query endpoint hit - Received file: {audio.filename}")
+            print(f"File content type: {audio.content_type}")
+            print(f"File size: {audio.size}")
+            
+            transribeEndpoint = "http://localhost:5000/transcribe"
+            ttsEndpoint = "http://localhost:5000/server"
+            
+            file_content = await audio.read()
+            print(f"File content length: {len(file_content)}")
+            
+            files = {'audio': (audio.filename, file_content, audio.content_type)}
+            
+            print(f"Calling transcribe endpoint with files: {files.keys()}")
+            
+            async with httpx.AsyncClient() as client:
+                transcribeResponse = await client.post(transribeEndpoint, files=files)
+                # print(f"Transcribe response status: {transcribeResponse.status_code}")
+                print(f"Transcribe response: {transcribeResponse.text}")
+                
+                if transcribeResponse.status_code != 200:
+                    return JSONResponse(content={"error": f"Transcription failed: {transcribeResponse.text}"}, status_code=500)
+                
+                transcribe_data = transcribeResponse.json()
+                text = transcribe_data.get("text", "")
+                if not text:
+                    return JSONResponse(content={"error": "No text found in transcription"}, status_code=400)
+                print(f"Transcribed text: {text}")
+                if not text.strip():
+                    return JSONResponse(content={"error": "Transcribed text is empty"}, status_code=400)
+                
+
+                query = text
+
+                print(f"LLM query received: {query}")
+                if not query:
+                    return JSONResponse(content={"error": "Query cannot be empty"}, status_code=400)
+                try:
+                    llm = genai.Client(api_key=os.getenv('GOOGLE_GENAI_API_KEY'))
+                    
+                    history_for_gemini = []
+                    if(session_id in histories):
+                        for msg in histories[session_id]:
+                            if msg["role"] == "user":
+                                history_for_gemini.append(types.Content(role="user", parts=[types.Part(text=msg["content"])]))
+                            elif msg["role"] == "model":
+                                history_for_gemini.append(types.Content(role="model", parts=[types.Part(text=msg["content"])]))
+                    else:
+                        histories[session_id] = []
+                    
+                    chat = llm.chats.create(
+                        model="gemini-1.5-flash",
+                        config=types.GenerateContentConfig(
+                            system_instruction="You are an helpful cat-themed AI Assistant and your name is wimsy."
+                        ),
+                        history=history_for_gemini
+                    )
+
+                    response = chat.send_message(query)
+                    response = response.text
+                    # Store history in our format
+                    histories[session_id].append({"role": "user", "content": query})
+                    histories[session_id].append({"role": "model", "content": response})
+                    # print(histories)  
+                    print(f"LLM response: {response}")
+                    
+                except Exception as e:
+                    print(f"Exception in llm_query: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500)
+
+                tts_data = {
+                    "text": response,
+                    "voice_id": "en-IN-arohi",
+                    "style": "Conversational"
+                }
+                print(f"Calling TTS endpoint with LLM Response data: {tts_data}")
+                
+                ttsResponse = await client.post(ttsEndpoint, json=tts_data)
+                print(f"TTS response status: {ttsResponse.status_code}")
+                print(f"TTS response: {ttsResponse.text}")
+                
+                if ttsResponse.status_code != 200:
+                    return JSONResponse(content={"error": f"TTS generation failed: {ttsResponse.text}"}, status_code=500)
+                
+                tts_response_data = ttsResponse.json()
+                audioUrl = tts_response_data.get("audioUrl", "")
+                if not audioUrl:
+                    return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+                    
+                return JSONResponse(content={"audioUrl": audioUrl, "LLM_Response": response}, status_code=200)
+                
+    except Exception as e:
+        print(f"Exception in tts_echo: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500) 
+
+
+

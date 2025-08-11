@@ -1,4 +1,3 @@
-
 const getData = async () => {
     try {
         const response = await axios.get('http://localhost:5000/');
@@ -118,9 +117,7 @@ const recordedAudio = document.getElementById('recordedAudio');
 const recordingDuration = document.getElementById('recordingDuration');
 const playAgainButton = document.getElementById('playAgain');
 const recordNewButton = document.getElementById('recordNew');
-const innerLoadingBar = document.querySelector('.innerLoadingBar');
-const transcriptText = document.getElementById('transcriptText');
-
+let userId = 'default_user';
 
 
 // Define handler functions so we can remove them later
@@ -187,113 +184,20 @@ function startRecording(stream) {
         const audioURL = URL.createObjectURL(blob);
         console.log('Audio URL:', audioURL);
         recordedAudio.src = audioURL;
-
         // Show recorded audio container first so user can see the progress
         recordedAudioContainer.classList.remove('hidden');
         
-        // Reset and show progress bar
-        const uploadProgressContainer = document.getElementById('uploadProgressContainer');
-        const innerLoadingBar = document.querySelector('.innerLoadingBar');
-        const uploadStatusText = document.querySelector('.uploadStatusText');
-        
-        // Show the progress container
-        uploadProgressContainer.classList.remove('hidden');
-        
-        // Reset progress bar to initial state
-        innerLoadingBar.style.width = '0%';
-        innerLoadingBar.classList.remove('bg-green-500', 'bg-red-500');
-        innerLoadingBar.classList.add('bg-orange-500');
-        uploadStatusText.textContent = 'Preparing...';
         
         const formData = new FormData();
         formData.append('audio', blob, 'recording.webm');
 
         try {
-            // Simulate progress updates (since axios doesn't have built-in upload progress for small files)
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 10;
-                if (progress <= 90) {
-                    innerLoadingBar.style.width = `${progress}%`;
-                    uploadStatusText.textContent = `Uploading ${progress}%`;
-                }
-            }, 200);
-            
-            // Actual upload
-            const transcribe = await axios.post('http://localhost:5000/transcribe', formData); 
-            console.log('Transcription response:', transcribe.data);
-
-            transcriptText.textContent = transcribe.data.text || 'No transcription available';
-            const post = await axios.post('http://localhost:5000/upload', formData);
-            console.log('Post response:', post.data);
-
-            
-            const mrufAudioUrl = await axios.post('http://localhost:5000/tts/echo', formData);
-            console.log('MRUF Audio URL:', mrufAudioUrl.data);
-            const playBackAudio = document.getElementById('playBackAudio');
-            playBackAudio.src = mrufAudioUrl.data.audioUrl;
-            
-            // Complete the progress animation
-            clearInterval(progressInterval);
-            innerLoadingBar.style.width = '100%';
-            innerLoadingBar.classList.remove('bg-orange-500');
-            innerLoadingBar.classList.add('bg-green-500');
-            uploadStatusText.textContent = 'Completed Upload 100%';
-            
-            // Create a separate success box with details
-            const duration = Math.floor((Date.now() - recordingStartTime) / 1000);
-            const minutes = Math.floor(duration / 60);
-            const seconds = duration % 60;
-            const durationText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Create success box if it doesn't exist already
-            let successBox = document.getElementById('uploadSuccessBox');
-            if (!successBox) {
-                successBox = document.createElement('div');
-                successBox.id = 'uploadSuccessBox';
-                successBox.className = 'mt-3 bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-lg p-3';
-                uploadProgressContainer.insertAdjacentElement('afterend', successBox);
-            }
-            
-            // Update success box content
-            successBox.innerHTML = `
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-green-700">✅ Upload Successful</span>
-                    <span class="text-xs text-green-600">File: recording.webm</span>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                    <span class="text-green-600">Duration: ${durationText}</span>
-                    <span class="text-green-600">${new Date().toLocaleTimeString()}</span>
-                </div>
-            `;
-            successBox.classList.remove('hidden');
-            
+            const mrufAudioUrl = await axios.post(`http://localhost:5000/agent/chat/${userId}`, formData);
+            console.log('MRUF LLM Audio URL:', mrufAudioUrl.data);
+            const playBack_LLM_Audio = document.getElementById('LLMResponse');
+            playBack_LLM_Audio.src = mrufAudioUrl.data.audioUrl;     
         } catch (error) {
-            console.error('Error uploading audio:', error);
-            innerLoadingBar.style.width = '100%';
-            innerLoadingBar.classList.remove('bg-orange-500');
-            innerLoadingBar.classList.add('bg-red-500');
-            uploadStatusText.textContent = 'Completed Upload 100%';
-            
-            // Create error notification box
-            let errorBox = document.getElementById('uploadErrorBox');
-            if (!errorBox) {
-                errorBox = document.createElement('div');
-                errorBox.id = 'uploadErrorBox';
-                errorBox.className = 'mt-3 bg-gradient-to-r from-red-100 to-rose-100 border-2 border-red-300 rounded-lg p-3';
-                uploadProgressContainer.insertAdjacentElement('afterend', errorBox);
-            }
-            
-            errorBox.innerHTML = `
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-red-700">❌ Upload Failed</span>
-                    <span class="text-xs text-red-600">File: recording.webm</span>
-                </div>
-                <div class="text-xs text-red-600">
-                    Please try again. Server may be unavailable.
-                </div>
-            `;
-            errorBox.classList.remove('hidden');
+            console.error('Unexpected Error', error);
         }
         
         // Calculate and display duration
@@ -387,7 +291,8 @@ echoBotStartButton.addEventListener('click', () => {
         echoBotStarted = true;
         mainRecordingPanel.classList.remove('hidden');
         echoBotStartButton.textContent = 'Stop Bot';
-        
+        userId = generateUserId();
+        console.log('Starting Echo Bot with User ID:', userId);
         initializeRecording();
     } else {
         echoBotStarted = false;
@@ -417,4 +322,12 @@ echoBotStartButton.addEventListener('click', () => {
         recordNewButton?.removeEventListener('click', handleRecordNewButtonClick);
     }
 });
+
+function generateUserId() {
+    // Generates a RFC4122 version 4 UUID
+    return 'user_' + ([1e7]+-1e3+-4e3+-8e3+-1e11)
+        .replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+}
 

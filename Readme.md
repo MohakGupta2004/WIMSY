@@ -2,9 +2,10 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Challenge-In%20Progress-blue?style=for-the-badge" alt="Challenge Status"/>
-  <img src="https://img.shields.io/badge/Days%20Completed-7%2F30-green?style=for-the-badge" alt="Progress"/>
+  <img src="https://img.shields.io/badge/Days%20Completed-10%2F30-green?style=for-the-badge" alt="Progress"/>
   <img src="https://img.shields.io/badge/Made%20with-Murf%20AI-orange?style=for-the-badge" alt="Made with Murf AI"/>
   <img src="https://img.shields.io/badge/Transcription-AssemblyAI-purple?style=for-the-badge" alt="AssemblyAI"/>
+  <img src="https://img.shields.io/badge/LLM-Gemini--2.5--flash-blue?style=for-the-badge" alt="Gemini LLM"/>
 </div>
 
 This repository documents my journey through the **30-Day AI Voice Agent Challenge** by Murf AI. Follow along as I build a fully functional AI-powered voice companion from scratch, one day at a time!
@@ -31,6 +32,9 @@ The goal is to create a voice agent that can:
 - Live real-time transcription during recording
 - WebSocket-based streaming for continuous transcription
 - Persistent transcript history with clear functionality
+- AI-powered text responses via Google's Gemini 2.5 flash model
+- Conversational chat history with session IDs
+- End-to-end voice chat: speak, transcribe, LLM, TTS, audio reply
 - Clean separation of concerns with model-view-controller pattern
 - Modern UI with Tailwind CSS and responsive design
 
@@ -41,6 +45,7 @@ The goal is to create a voice agent that can:
 * **Styling:** [Tailwind CSS](https://tailwindcss.com/) (via CDN)
 * **Voice Technology:** [Murf AI API](https://murf.ai/api) for Text-to-Speech
 * **Transcription:** [AssemblyAI](https://www.assemblyai.com/) for Speech-to-Text
+* **Language Model:** [Google Gemini 2.5](https://ai.google.dev/) for AI text responses
 * **Real-time Communication:** WebSockets for live transcription
 * **Environment:** [Python venv](https://docs.python.org/3/library/venv.html) for dependency isolation
 
@@ -53,6 +58,7 @@ To get WIMSY running locally, follow these steps:
 * Python 3.8+
 * A Murf AI API key (sign up at [murf.ai](https://murf.ai))
 * An AssemblyAI API key (sign up at [assemblyai.com](https://www.assemblyai.com/))
+* A Google Generative AI API key (sign up at [ai.google.dev](https://ai.google.dev/))
 * Modern web browser with microphone access
 
 ### Installation
@@ -67,6 +73,7 @@ To get WIMSY running locally, follow these steps:
    # Create a .env file in the backend directory
    echo "MURF_AI_API_KEY=your_murf_api_key_here" > backend/.env
    echo "ASSEMBLY_AI_API_KEY=your_assemblyai_api_key_here" >> backend/.env
+   echo "GOOGLE_GENAI_API_KEY=your_google_genai_api_key_here" >> backend/.env
    ```
 
 3. **Backend Setup**
@@ -146,7 +153,30 @@ To get WIMSY running locally, follow these steps:
   * Enhanced user experience with real-time feedback and professional voice output
   * Demo ready for sharing and public feedback
 
-* **Days 8-30:** Coming soon!
+* **Day 8:** 🧠 **Gemini LLM Integration**
+  * Created `/llm/query` endpoint for AI text generation
+  * Integrated Google's Gemini 2.5 Flash model for natural language responses
+  * Customized system instructions for cat-themed AI assistant persona
+  * Added robust error handling and validation
+  * Implemented proper API key security with environment variables
+  * Set up for future conversational features and voice agent intelligence
+
+* **Day 9:** 🗣️ **LLM Audio Chat Integration**
+  * Updated `/llm/query` endpoint to accept audio input
+  * Orchestrated STT → LLM → TTS pipeline for spoken queries and AI voice replies
+  * Frontend plays Murf-generated LLM response audio in the UI
+  * Achieved seamless voice-to-voice AI conversation
+  * Demo video posted on LinkedIn
+
+* **Day 10:** 🗂️ **Conversational Chat History with Session IDs**
+  * Created `/agent/chat/{session_id}` endpoint for session-based chat history
+  * Chat history stored in a global in-memory dictionary for each session
+  * Each session remembers previous messages for contextual LLM responses
+  * UI stores session ID in the URL and auto-restarts recording after each reply
+  * Achieved a complete working conversational bot with persistent memory
+  * Demo video posted on LinkedIn
+
+* **Days 11-30:** Coming soon!
 
 ## 📝 Project Structure
 
