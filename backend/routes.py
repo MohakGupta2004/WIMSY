@@ -283,13 +283,15 @@ async def llm_query(audio: UploadFile = File(...)):
 
 @router.post('/agent/chat/{session_id}')
 async def agent_chat(session_id: str, audio: UploadFile = File(...)):
+    transribeEndpoint = "http://localhost:5000/transcribe"
+    ttsEndpoint = "http://localhost:5000/server"
+
     try:
             print(f"llm/query endpoint hit - Received file: {audio.filename}")
             print(f"File content type: {audio.content_type}")
             print(f"File size: {audio.size}")
             
-            transribeEndpoint = "http://localhost:5000/transcribe"
-            ttsEndpoint = "http://localhost:5000/server"
+            
             
             file_content = await audio.read()
             print(f"File content length: {len(file_content)}")
@@ -304,15 +306,24 @@ async def agent_chat(session_id: str, audio: UploadFile = File(...)):
                 print(f"Transcribe response: {transcribeResponse.text}")
                 
                 if transcribeResponse.status_code != 200:
-                    return JSONResponse(content={"error": f"Transcription failed: {transcribeResponse.text}"}, status_code=500)
-                
+                    fallbackMsg = "Sorry, I am unable to process your request at the moment. Please try again later."
+                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
+                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
+                    return JSONResponse(content={"error": f"Transcription failed: {transcribeResponse.text}", "audioUrl": audioUrl}, status_code=200)
+
                 transcribe_data = transcribeResponse.json()
                 text = transcribe_data.get("text", "")
                 if not text:
-                    return JSONResponse(content={"error": "No text found in transcription"}, status_code=400)
+                    fallbackMsg = "No text found in transcription. Please try again."
+                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
+                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
+                    return JSONResponse(content={"error": "No text found in transcription", "audioUrl":audioUrl}, status_code=200)
                 print(f"Transcribed text: {text}")
                 if not text.strip():
-                    return JSONResponse(content={"error": "Transcribed text is empty"}, status_code=400)
+                    fallbackMsg = "No text found in transcription. Please try again."
+                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
+                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
+                    return JSONResponse(content={"error": "No text found in transcription", "audioUrl":audioUrl}, status_code=200)
                 
 
                 query = text
@@ -353,7 +364,13 @@ async def agent_chat(session_id: str, audio: UploadFile = File(...)):
                     print(f"Exception in llm_query: {str(e)}")
                     import traceback
                     traceback.print_exc()
-                    return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500)
+                    fallbackMsg = "Sorry, I am unable to process your request at the moment. Please try again later."
+                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
+                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
+                    if not audioUrl:
+                        return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+
+                    return JSONResponse(content={"error": f"Unexpected error: {str(e)}", "audioUrl": audioUrl}, status_code=200)
 
                 tts_data = {
                     "text": response,

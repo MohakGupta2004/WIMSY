@@ -193,6 +193,7 @@ function startRecording(stream) {
 
         try {
             const mrufAudioUrl = await axios.post(`http://localhost:5000/agent/chat/${userId}`, formData);
+            console.log(mrufAudioUrl);
             console.log('MRUF LLM Audio URL:', mrufAudioUrl.data);
             const playBack_LLM_Audio = document.getElementById('LLMResponse');
             playBack_LLM_Audio.src = mrufAudioUrl.data.audioUrl;     
