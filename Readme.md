@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Challenge-In%20Progress-blue?style=for-the-badge" alt="Challenge Status"/>
-  <img src="https://img.shields.io/badge/Days%20Completed-10%2F30-green?style=for-the-badge" alt="Progress"/>
+  <img src="https://img.shields.io/badge/Days%20Completed-11%2F30-green?style=for-the-badge" alt="Progress"/>
   <img src="https://img.shields.io/badge/Made%20with-Murf%20AI-orange?style=for-the-badge" alt="Made with Murf AI"/>
   <img src="https://img.shields.io/badge/Transcription-AssemblyAI-purple?style=for-the-badge" alt="AssemblyAI"/>
   <img src="https://img.shields.io/badge/LLM-Gemini--2.5--flash-blue?style=for-the-badge" alt="Gemini LLM"/>
@@ -35,6 +35,7 @@ The goal is to create a voice agent that can:
 - AI-powered text responses via Google's Gemini 2.5 flash model
 - Conversational chat history with session IDs
 - End-to-end voice chat: speak, transcribe, LLM, TTS, audio reply
+- Robust error handling with fallback audio responses
 - Clean separation of concerns with model-view-controller pattern
 - Modern UI with Tailwind CSS and responsive design
 
@@ -176,7 +177,15 @@ To get WIMSY running locally, follow these steps:
   * Achieved a complete working conversational bot with persistent memory
   * Demo video posted on LinkedIn
 
-* **Days 11-30:** Coming soon!
+* **Day 11:** 🛡️ **Robust Error Handling & Fallback Responses**
+  * Added comprehensive try-catch blocks throughout backend endpoints
+  * Implemented graceful error handling for STT, LLM, and TTS failures
+  * Created fallback audio responses: "Sorry, I am unable to process your request at the moment"
+  * Enhanced frontend error handling with user-friendly messages
+  * Tested error scenarios by simulating API key failures and service outages
+  * Improved application reliability and user experience
+
+* **Days 12-30:** Coming soon!
 
 ## 📝 Project Structure
 

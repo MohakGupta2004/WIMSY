@@ -23,6 +23,7 @@ This is the backend service for the WIMSY AI Voice Agent. It provides RESTful AP
   - [Live Transcription WebSocket](#live-transcription-websocket)
   - [Echo Bot v2: Transcribe & Murf Voice Playback](#echo-bot-v2-transcribe--murf-voice-playback)
   - [LLM Query: Gemini AI Text Generation](#llm-query-gemini-ai-text-generation)
+  - [Agent Chat: Session-based Conversational AI](#agent-chat-session-based-conversational-ai)
 - [Models](#-models)
 - [Error Handling](#-error-handling)
 
@@ -267,6 +268,43 @@ curl -X POST http://localhost:5000/llm/query \
 - Contextual understanding of queries
 - Detailed error reporting
 
+### Agent Chat: Session-based Conversational AI
+
+**Endpoint:** `POST /agent/chat/{session_id}`
+
+A complete conversational AI endpoint that maintains chat history per session. Accepts audio input, transcribes it, generates AI responses using Gemini, and returns Murf-generated audio.
+
+**Request:**
+- Path parameter: `session_id` (string) - Unique identifier for the conversation session
+- Multipart/form-data with file field name `audio`
+
+**Response:**
+```json
+{
+  "audioUrl": "https://cdn.murf.ai/speech/generated_response.mp3",
+  "LLM_Response": "AI-generated text response from Gemini"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:5000/agent/chat/user_12345 \
+  -F "audio=@recording.webm"
+```
+
+**Features:**
+- Session-based conversation memory
+- Complete STT → LLM → TTS pipeline
+- Robust error handling with fallback audio responses
+- Automatic conversation history management
+- Cat-themed AI assistant persona
+
+**Error Handling:**
+- If transcription fails: Returns fallback audio "Sorry, I am unable to process your request at the moment"
+- If LLM fails: Returns error audio with friendly message
+- If TTS fails: Returns appropriate error response
+- All errors include both JSON error messages and audio fallbacks
+
 ## 📝 Models
 
 ### TextToSpeechRequest
@@ -317,18 +355,28 @@ For the `/upload` endpoint, FastAPI's `UploadFile` class is used to handle the i
 
 ## ❌ Error Handling
 
-The API provides appropriate error responses for various scenarios:
+The API provides robust error handling with both JSON responses and audio fallbacks for a better user experience:
 
-| Error | Status Code | Response |
-|-------|-------------|----------|
-| Missing Murf AI API Key | 500 | `{"error": "MURF_AI_API_KEY not found"}` |
-| Missing AssemblyAI API Key | 500 | `{"error": "ASSEMBLY_AI_API_KEY not found"}` |
-| Request Error | 500 | `{"error": "[Error message]"}` |
-| JSON Decode Error | 500 | `{"error": "Failed to decode JSON response"}` |
-| File Upload Error | 500 | `{"error": "[Error message]"}` |
-| Transcription Error | 500 | `{"error": "Transcription failed"}` |
-| WebSocket Error | - | `{"error": "[Error message]"}` |
-| Invalid File Type | 422 | `{"error": "Unsupported file type"}` |
+| Error Scenario | Status Code | JSON Response | Audio Fallback |
+|----------------|-------------|---------------|----------------|
+| Missing Murf AI API Key | 500 | `{"error": "MURF_AI_API_KEY not found"}` | - |
+| Missing AssemblyAI API Key | 500 | `{"error": "ASSEMBLY_AI_API_KEY not found"}` | - |
+| Missing Google GenAI API Key | 500 | `{"error": "GOOGLE_GENAI_API_KEY not found"}` | - |
+| Transcription Failure | 200 | `{"error": "Transcription failed", "audioUrl": "..."}` | "Sorry, I am unable to process your request at the moment" |
+| Empty Transcription | 200 | `{"error": "No text found", "audioUrl": "..."}` | "No text found in transcription. Please try again" |
+| LLM Processing Error | 200 | `{"error": "LLM error", "audioUrl": "..."}` | "Sorry, I am unable to process your request at the moment" |
+| TTS Generation Error | 500 | `{"error": "TTS generation failed"}` | - |
+| Network/Request Error | 500 | `{"error": "[Error message]"}` | - |
+| JSON Decode Error | 500 | `{"error": "Failed to decode JSON response"}` | - |
+| File Upload Error | 500 | `{"error": "[Error message]"}` | - |
+| WebSocket Error | - | `{"error": "[Error message]"}` | - |
+| Invalid File Type | 422 | `{"error": "Unsupported file type"}` | - |
+
+**Key Features:**
+- **Graceful Degradation**: Critical errors return both error messages and fallback audio
+- **User-Friendly Messages**: Audio responses use natural language instead of technical errors
+- **Session Preservation**: Chat history is maintained even when individual requests fail
+- **Comprehensive Logging**: All errors are logged with full stack traces for debugging
 
 ## 🧩 Project Structure
 
