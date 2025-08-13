@@ -8,7 +8,10 @@ import assemblyai as aai
 import httpx
 from google import genai
 from google.genai import types
+from pydantic import BaseModel
 
+class ChatRequest(BaseModel):
+    userRes: str
 
 router = APIRouter()
 
@@ -282,51 +285,14 @@ async def llm_query(audio: UploadFile = File(...)):
         return JSONResponse(content={"error": f"Unexpected error: {str(e)}"}, status_code=500) 
 
 @router.post('/agent/chat/{session_id}')
-async def agent_chat(session_id: str, audio: UploadFile = File(...)):
-    transribeEndpoint = "http://localhost:5000/transcribe"
+async def agent_chat(session_id: str, request: ChatRequest):
     ttsEndpoint = "http://localhost:5000/server"
 
     try:
-            print(f"llm/query endpoint hit - Received file: {audio.filename}")
-            print(f"File content type: {audio.content_type}")
-            print(f"File size: {audio.size}")
-            
-            
-            
-            file_content = await audio.read()
-            print(f"File content length: {len(file_content)}")
-            
-            files = {'audio': (audio.filename, file_content, audio.content_type)}
-            
-            print(f"Calling transcribe endpoint with files: {files.keys()}")
-            
-            async with httpx.AsyncClient() as client:
-                transcribeResponse = await client.post(transribeEndpoint, files=files)
-                # print(f"Transcribe response status: {transcribeResponse.status_code}")
-                print(f"Transcribe response: {transcribeResponse.text}")
-                
-                if transcribeResponse.status_code != 200:
-                    fallbackMsg = "Sorry, I am unable to process your request at the moment. Please try again later."
-                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
-                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
-                    return JSONResponse(content={"error": f"Transcription failed: {transcribeResponse.text}", "audioUrl": audioUrl}, status_code=200)
+                query = request.userRes if request.userRes else ""
+                if not query:
+                    return JSONResponse(content={"error": "Query cannot be empty"}, status_code=400)
 
-                transcribe_data = transcribeResponse.json()
-                text = transcribe_data.get("text", "")
-                if not text:
-                    fallbackMsg = "No text found in transcription. Please try again."
-                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
-                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
-                    return JSONResponse(content={"error": "No text found in transcription", "audioUrl":audioUrl}, status_code=200)
-                print(f"Transcribed text: {text}")
-                if not text.strip():
-                    fallbackMsg = "No text found in transcription. Please try again."
-                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
-                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
-                    return JSONResponse(content={"error": "No text found in transcription", "audioUrl":audioUrl}, status_code=200)
-                
-
-                query = text
 
                 print(f"LLM query received: {query}")
                 if not query:
@@ -345,9 +311,9 @@ async def agent_chat(session_id: str, audio: UploadFile = File(...)):
                         histories[session_id] = []
                     
                     chat = llm.chats.create(
-                        model="gemini-1.5-flash",
+                        model="gemini-2.0-flash",
                         config=types.GenerateContentConfig(
-                            system_instruction="You are an helpful cat-themed AI Assistant and your name is wimsy."
+                            system_instruction="You are an helpful cat-themed AI Assistant and your name is wimsy. Ensure that every response you generate is not more than 3000 characters."
                         ),
                         history=history_for_gemini
                     )
@@ -365,12 +331,13 @@ async def agent_chat(session_id: str, audio: UploadFile = File(...)):
                     import traceback
                     traceback.print_exc()
                     fallbackMsg = "Sorry, I am unable to process your request at the moment. Please try again later."
-                    errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
-                    audioUrl = errorAudioUrl.json().get("audioUrl", "")
-                    if not audioUrl:
-                        return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+                    async with httpx.AsyncClient() as client:
+                        errorAudioUrl = await client.post(ttsEndpoint, json={"text": fallbackMsg, "voice_id": "en-IN-arohi", "style": "Conversational"})
+                        audioUrl = errorAudioUrl.json().get("audioUrl", "")
+                        if not audioUrl:
+                            return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
 
-                    return JSONResponse(content={"error": f"Unexpected error: {str(e)}", "audioUrl": audioUrl}, status_code=200)
+                        return JSONResponse(content={"error": f"Unexpected error: {str(e)}", "audioUrl": audioUrl}, status_code=200)
 
                 tts_data = {
                     "text": response,
@@ -379,19 +346,20 @@ async def agent_chat(session_id: str, audio: UploadFile = File(...)):
                 }
                 print(f"Calling TTS endpoint with LLM Response data: {tts_data}")
                 
-                ttsResponse = await client.post(ttsEndpoint, json=tts_data)
-                print(f"TTS response status: {ttsResponse.status_code}")
-                print(f"TTS response: {ttsResponse.text}")
-                
-                if ttsResponse.status_code != 200:
-                    return JSONResponse(content={"error": f"TTS generation failed: {ttsResponse.text}"}, status_code=500)
-                
-                tts_response_data = ttsResponse.json()
-                audioUrl = tts_response_data.get("audioUrl", "")
-                if not audioUrl:
-                    return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+                async with httpx.AsyncClient() as client:
+                    ttsResponse = await client.post(ttsEndpoint, json=tts_data)
+                    print(f"TTS response status: {ttsResponse.status_code}")
+                    print(f"TTS response: {ttsResponse.text}")
                     
-                return JSONResponse(content={"audioUrl": audioUrl, "LLM_Response": response}, status_code=200)
+                    if ttsResponse.status_code != 200:
+                        return JSONResponse(content={"error": f"TTS generation failed: {ttsResponse.text}"}, status_code=500)
+                    
+                    tts_response_data = ttsResponse.json()
+                    audioUrl = tts_response_data.get("audioUrl", "")
+                    if not audioUrl:
+                        return JSONResponse(content={"error": "No audio URL found in TTS response"}, status_code=400)
+                        
+                    return JSONResponse(content={"audioUrl": audioUrl, "LLM_Response": response}, status_code=200)
                 
     except Exception as e:
         print(f"Exception in tts_echo: {str(e)}")

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cat Voice Agent UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-pink-50 flex h-screen">
+  <!-- Sidebar -->
+  <div class="w-20 bg-pink-200 flex flex-col items-center py-6 space-y-6 rounded-r-3xl">
+    <button class="text-pink-700 hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg>
+    </button>
+    <button class="text-pink-700 hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v10a2 2 0 01-2 2h-2m-6 0H7a2 2 0 01-2-2V10a2 2 0 012-2h2m6 0V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2" /></svg>
+    </button>
+    <button class="text-pink-700 hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+    </button>
+    <button class="text-pink-700 hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4" /></svg>
+    </button>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col p-6">
+    <!-- Cat Header -->
+    <div class="flex items-center mb-4">
+      <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" alt="Cat Avatar" class="w-20 h-20 rounded-full shadow-lg" />
+      <h1 class="ml-4 text-3xl font-bold text-pink-800">ChatCat</h1>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="flex-1 overflow-y-auto space-y-4 p-4 bg-white rounded-3xl shadow-inner">
+      <div class="self-start max-w-xs bg-pink-200 text-pink-900 p-3 rounded-2xl">How can I help you today?</div>
+      <div class="self-end max-w-xs bg-pink-500 text-white p-3 rounded-2xl">Hello!</div>
+      <div class="self-end max-w-xs bg-pink-500 text-white p-3 rounded-2xl">Tell me a joke.</div>
+      <div class="self-start max-w-xs bg-pink-200 text-pink-900 p-3 rounded-2xl">Why did the cat sit on the computer?</div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="mt-4 flex items-center bg-white rounded-full shadow-lg p-2">
+      <input type="text" placeholder="Say something..." class="flex-1 px-4 py-2 rounded-full focus:outline-none" />
+      <button class="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1v22m9-11H3" /></svg>
+      </button>
+    </div>
+  </div>
+</body>
+</html>
